@@ -4,25 +4,33 @@ import requests
 import os
 import threading
 import json
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+)
+
 
 app = Flask(__name__)
 
 # Kafka configuration
 KAFKA_BROKER = os.getenv("KAFKA_BROKER", "localhost:9092")
 KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "default-topic")
+KAFKA_GROUP_ID=os.getenv("KAFKA_GROUP_ID", "default-group")
 
 
 def kafka_consumer():
     consumer = Consumer({
         "bootstrap.servers": KAFKA_BROKER,
-        "group.id": "my-group",
+        "group.id": KAFKA_GROUP_ID,
         "auto.offset.reset": "earliest"
     })
     consumer.subscribe([KAFKA_TOPIC])
     while True:
         msg = consumer.poll(1.0)
         if msg is not None and msg.error() is None:
-            print(f"Received message: {msg.value().decode('utf-8')}")
+            logging.info(f"Received message: {msg.value().decode('utf-8')}")
 
 
 threading.Thread(target=kafka_consumer, daemon=True).start()
@@ -54,9 +62,10 @@ def rest_call():
 @app.route("/receive", methods=["POST"])
 def receive_message():
     data = request.json
-    print(f"Received REST message: {json.dumps(data)}")
+    logging.info(f"Received REST message: {json.dumps(data)}")
     return jsonify({"status": "Received"})
 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
+    app.logger.setLevel(logging.INFO)
