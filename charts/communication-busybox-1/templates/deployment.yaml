@@ -36,9 +36,11 @@ spec:
             - name: KAFKA_BROKER
               value: "{{ .Values.kafka.broker.host }}:{{ .Values.kafka.broker.port}}"
             - name: KAFKA_GROUP_ID
-              value: "{{ .Values.kafka.consumerConfigs.groupId }}"
-            - name: KAFKA_TOPIC
-              value:  {{ .Values.kafka.topicConfig.topicOne.name | quote }}
+              value: "{{ .Values.kafka.consumer.groupId }}"
+            - name: CONSUME_KAFKA_TOPIC
+              value:  {{ include "communication-busybox-1.extractKafkaTopics" .Values.kafka.consumer.topics | quote }}
+            - name: PRODUCE_KAFKA_TOPIC
+              value: {{ include "communication-busybox-1.extractKafkaTopics" .Values.kafka.producer | quote }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

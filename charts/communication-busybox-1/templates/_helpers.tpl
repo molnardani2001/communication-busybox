@@ -60,3 +60,15 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{- define "communication-busybox-1.extractKafkaTopics" -}}
+  {{- $topics := list -}}
+  {{- range $key, $value := . -}}
+    {{- if kindIs "map" $value -}}
+      {{- if hasKey $value "name" -}}
+        {{- $topics = append $topics $value.name -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- join "," $topics -}}
+{{- end -}}

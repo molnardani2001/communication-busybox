@@ -115,9 +115,14 @@ kafka:
     host: kafka-cluster-kafka-bootstrap
     port: 9092
 
-  consumerConfigs:
+  consumer:
     groupId: busybox-1
+    topics:
+      topicOne:
+        name: busybox-2-topic-1
+      topicTwo:
+        name: busybox-2-topic-2
 
-  topicConfig:
+  producer:
     topicOne:
-      name: busybox-1-topic
+      name: busybox-1-topic-1
