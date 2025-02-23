@@ -36,11 +36,41 @@ Common labels
 {{- define "communication-busybox-1.labels" -}}
 helm.sh/chart: {{ include "communication-busybox-1.chart" . }}
 {{ include "communication-busybox-1.selectorLabels" . }}
+{{/*
+custom label to secure services only with the below label
+*/}}
+service-istio-secure: "true"
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
+
+{{- define "communication-busybox-1.annotations" -}}
+sidecar.istio.io/inject: "true"
+sidecar.istio.io/userVolume: {{ include "communication-busybox-1.service-mesh-user-volume" . | fromYaml | toJson | quote }}
+sidecar.istio.io/userVolumeMount: {{ include "communication-busybox-1.service-mesh-user-volume-mount" . | fromYaml | toJson | quote }}
+{{- end -}}
+
+{{- define "communication-busybox-1.service-mesh-user-volume" }}
+istio-certs:
+  secret:
+    secretName: istio-shared-cert
+    optional: true
+istio-ca-cert:
+  secret:
+    secretName: istio-ca-cert
+    optional: true
+{{- end -}}
+
+{{- define "communication-busybox-1.service-mesh-user-volume-mount" }}
+istio-certs:
+  mountPath: "/etc/certs"
+  readOnly: true
+istio-ca-cert:
+  mountPath: "/etc/certs/ca"
+  readOnly: true
+{{- end -}}
 
 {{/*
 Selector labels

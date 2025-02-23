@@ -4,6 +4,12 @@ metadata:
   name: {{ include "communication-busybox-1.fullname" . }}
   labels:
     {{- include "communication-busybox-1.labels" . | nindent 4 }}
+  annotations:
+    proxy.istio.io/config: |
+      proxyMetadata:
+        ISTIO_META_TLS_CLIENT_CERT_CHAIN: /etc/certs/tls.crt
+        ISTIO_META_TLS_CLIENT_KEY: /etc/certs/tls.key
+        ISTIO_META_TLS_CLIENT_ROOT_CERT: /etc/certs/ca/ca.crt
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -13,8 +19,9 @@ spec:
       {{- include "communication-busybox-1.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        {{- include "communication-busybox-1.annotations" . | nindent 8 }}
+        {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
@@ -41,6 +48,8 @@ spec:
               value:  {{ include "communication-busybox-1.extractKafkaTopics" .Values.kafka.consumer.topics | quote }}
             - name: PRODUCE_KAFKA_TOPIC
               value: {{ include "communication-busybox-1.extractKafkaTopics" .Values.kafka.producer | quote }}
+            - name: HOSTS
+              value: "demo-app-1-communication-busybox-1"
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

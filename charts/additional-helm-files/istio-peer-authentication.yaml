@@ -1,0 +1,11 @@
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: secure-services
+  namespace: molnardani
+spec:
+  selector:
+    matchLabels:
+      service-istio-secure: "true"  # Csak azokra a service-ekre vonatkozik, amelyeknél ez a label be van állítva
+  mtls:
+    mode: STRICT

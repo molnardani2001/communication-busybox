@@ -22,6 +22,10 @@ KAFKA_GROUP_ID=os.getenv("KAFKA_GROUP_ID", "default-group")
 
 KNOWN_SERVICES_TO_CALL = os.getenv("HOSTS","").split(",")
 
+logging.info(f"Known topics to consume: {','.join(KNOWN_KAFKA_TOPICS_TO_CONSUME)}")
+logging.info(f"Known topics to produce: {','.join(KNOWN_KAFKA_TOPICS_TO_PRODUCE)}")
+logging.info(f"Known hosts: {','.join(KNOWN_SERVICES_TO_CALL)}")
+
 
 def kafka_consumer(topic_):
     consumer = Consumer({
@@ -71,7 +75,7 @@ def send_message():
 @app.route("/call", methods=["POST"])
 def rest_call():
     data = request.json
-    target_url = data.get("url")
+    target_url: str = data.get("url")
     if not target_url:
         return jsonify({"error": "No target URL provided"}), 400
 
@@ -81,7 +85,8 @@ def rest_call():
     payload = data.get("payload", {})
 
     logging.info(f"Calling '{target_url}' with payload '{payload}'")
-    response = requests.post(target_url, json=payload)
+    # istio will secure this request
+    response = requests.post(f"http://{target_url}:8080/receive", json=payload)
     return jsonify({"response": response.json()})
 
 

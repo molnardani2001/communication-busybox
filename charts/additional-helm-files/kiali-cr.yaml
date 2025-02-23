@@ -10,11 +10,8 @@ spec:
     cluster_wide_access: true
     discovery_selectors:
       default:
-        - matchExpressions:
-            - key: "namespace"
-              operator: In
-              values:
-                - molnardani
+        - matchLabels:
+            kubernetes.io/metadata.name: molnardani
     view_only_mode: false
   server:
     web_root: "/kiali/molnardani"
