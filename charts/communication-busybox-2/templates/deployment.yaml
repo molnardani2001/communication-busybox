@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "communication-busybox-1.fullname" . }}
+  name: {{ include "communication-busybox-2.fullname" . }}
   labels:
-    {{- include "communication-busybox-1.labels" . | nindent 4 }}
+    {{- include "communication-busybox-2.labels" . | nindent 4 }}
   annotations:
     proxy.istio.io/config: |
       proxyMetadata:
@@ -16,16 +16,16 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "communication-busybox-1.selectorLabels" . | nindent 6 }}
+      {{- include "communication-busybox-2.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
-        {{- include "communication-busybox-1.annotations" . | nindent 8 }}
+        {{- include "communication-busybox-2.annotations" . | nindent 8 }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "communication-busybox-1.labels" . | nindent 8 }}
+        {{- include "communication-busybox-2.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -34,7 +34,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "communication-busybox-1.serviceAccountName" . }}
+      serviceAccountName: {{ include "communication-busybox-2.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -45,11 +45,11 @@ spec:
             - name: KAFKA_GROUP_ID
               value: "{{ .Values.kafka.consumer.groupId }}"
             - name: CONSUME_KAFKA_TOPIC
-              value:  {{ include "communication-busybox-1.extractKafkaTopics" .Values.kafka.consumer.topics | quote }}
+              value:  {{ include "communication-busybox-2.extractKafkaTopics" .Values.kafka.consumer.topics | quote }}
             - name: PRODUCE_KAFKA_TOPIC
-              value: {{ include "communication-busybox-1.extractKafkaTopics" .Values.kafka.producer.topics | quote }}
+              value: {{ include "communication-busybox-2.extractKafkaTopics" .Values.kafka.producer.topics | quote }}
             - name: HOSTS
-              value: "demo-app-2-communication-busybox-2"
+              value: "demo-app-1-communication-busybox-1"
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
