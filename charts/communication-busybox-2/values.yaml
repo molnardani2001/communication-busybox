@@ -128,3 +128,11 @@ kafka:
         name: busybox-2-topic-1
       topicTwo:
         name: busybox-2-topic-2
+
+jaeger:
+  host: jaeger-agent
+  port: 6831
+
+hosts:
+  busyboxTwo:
+    host: demo-app-communication-busybox-1

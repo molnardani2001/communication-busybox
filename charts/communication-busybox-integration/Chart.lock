@@ -1,0 +1,9 @@
+dependencies:
+- name: communication-busybox-1
+  repository: file://../communication-busybox-1
+  version: 0.1.0
+- name: communication-busybox-2
+  repository: file://../communication-busybox-2
+  version: 0.1.0
+digest: sha256:c9828774ed72077cc569a1223b160565946d4d9f2f7bb3309bbcbbeed09caec2
+generated: "2025-03-03T21:08:37.53585958+01:00"

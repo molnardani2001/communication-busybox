@@ -49,7 +49,11 @@ spec:
             - name: PRODUCE_KAFKA_TOPIC
               value: {{ include "communication-busybox-1.extractKafkaTopics" .Values.kafka.producer.topics | quote }}
             - name: HOSTS
-              value: "demo-app-2-communication-busybox-2"
+              value: {{ include "communication-busybox-1.extractServiceHosts" .Values.hosts | quote }}
+            - name: JAEGER_HOST
+              value: {{ .Values.jaeger.host | quote }}
+            - name: JAEGER_PORT
+              value: {{ .Values.jaeger.port | quote }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

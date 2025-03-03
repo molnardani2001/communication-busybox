@@ -103,3 +103,15 @@ Create the name of the service account to use
   {{- end -}}
   {{- join "," $topics -}}
 {{- end -}}
+
+{{- define "communication-busybox-2.extractServiceHosts" -}}
+ {{- $hosts := list -}}
+ {{- range $key, $value := . -}}
+    {{- if kindIs "map" $value -}}
+      {{- if hasKey $value "host" -}}
+        {{- $hosts = append $hosts $value.host -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- join "," $hosts -}}
+{{- end -}}

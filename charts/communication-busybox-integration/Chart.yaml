@@ -1,0 +1,11 @@
+apiVersion: v2
+name: communication-busybox-integration
+description: A Helm integration chart for communication-busybox charts
+version: 0.1.0
+dependencies:
+  - name: communication-busybox-1
+    version: 0.1.0
+    repository: "file://../communication-busybox-1"
+  - name: communication-busybox-2
+    version: 0.1.0
+    repository: "file://../communication-busybox-2"
