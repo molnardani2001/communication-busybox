@@ -8,7 +8,7 @@ image:
   repository: molnardani2001/communication-busybox
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: test-06
+  tag: test-08
 
 imagePullSecrets: []
 nameOverride: ""
@@ -135,4 +135,4 @@ jaeger:
 
 hosts:
   busyboxTwo:
-    host: demo-app-communication-busybox-2
+    host: communication-busybox-2

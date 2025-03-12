@@ -40,6 +40,8 @@ spec:
       containers:
         - name: {{ .Chart.Name }}
           env:
+            - name: SERVICE_ID
+              value: {{ .Chart.Name | quote }}
             - name: KAFKA_BROKER
               value: "{{ .Values.kafka.broker.host }}:{{ .Values.kafka.broker.port}}"
             - name: KAFKA_GROUP_ID

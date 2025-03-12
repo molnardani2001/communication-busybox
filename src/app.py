@@ -6,13 +6,44 @@ import threading
 import json
 import logging
 
+#tracing
+from opentelemetry import trace
+from opentelemetry.baggage import set_baggage, get_baggage
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor
+)
+from opentelemetry.sdk.resources import Resource
+#from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from opentelemetry.instrumentation.confluent_kafka import ConfluentKafkaInstrumentor
+from opentelemetry.propagate import extract, inject
+from werkzeug.datastructures import Headers
+
+app = Flask(__name__)
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
 )
 
+service_id: str= os.getenv("SERVICE_ID","default")
 
-app = Flask(__name__)
+resource = Resource.create(attributes={"service.name": service_id})
+
+trace.set_tracer_provider(TracerProvider(resource=resource))
+tracer = trace.get_tracer(__name__)
+
+jaeger_exporter = OTLPSpanExporter(endpoint="http://jaeger-collector:4317", insecure=True)
+span_processor = BatchSpanProcessor(jaeger_exporter)
+trace.get_tracer_provider().add_span_processor(span_processor)
+
+# Flask és Requests instrumentálása
+FlaskInstrumentor().instrument_app(app)
+RequestsInstrumentor().instrument()
+ConfluentKafkaInstrumentor().instrument()
 
 # Kafka configuration
 KAFKA_BROKER = os.getenv("KAFKA_BROKER", "localhost:9092")
@@ -20,56 +51,80 @@ KNOWN_KAFKA_TOPICS_TO_CONSUME = os.getenv("CONSUME_KAFKA_TOPIC", "").split(",")
 KNOWN_KAFKA_TOPICS_TO_PRODUCE = os.getenv("PRODUCE_KAFKA_TOPIC", "").split(",")
 KAFKA_GROUP_ID=os.getenv("KAFKA_GROUP_ID", "default-group")
 
-KNOWN_SERVICES_TO_CALL = os.getenv("HOSTS","").split(",")
+KNOWN_SERVICES_TO_CALL = os.getenv("HOSTS","localhost").split(",")
 
 logging.info(f"Known topics to consume: {','.join(KNOWN_KAFKA_TOPICS_TO_CONSUME)}")
 logging.info(f"Known topics to produce: {','.join(KNOWN_KAFKA_TOPICS_TO_PRODUCE)}")
 logging.info(f"Known hosts: {','.join(KNOWN_SERVICES_TO_CALL)}")
 
 
-def kafka_consumer(topic_):
-    consumer = Consumer({
-        "bootstrap.servers": KAFKA_BROKER,
-        "group.id": KAFKA_GROUP_ID,
-        "auto.offset.reset": "earliest"
-    })
-    consumer.subscribe([topic_])
-
-    logging.info(f"Consumer thread started for topic: {topic_}")
-
-    while True:
-        msg = consumer.poll(1.0)
-        if msg is not None and msg.error() is None:
-            logging.info(f"[{topic_}] Received message: {msg.value().decode('utf-8')}")
-
-
-threads = []
-for topic_to_consume in KNOWN_KAFKA_TOPICS_TO_CONSUME:
-    thread = threading.Thread(target=kafka_consumer, args=(topic_to_consume,), daemon=True)
-    thread.start()
-    threads.append(thread)
-
-producer = Producer({"bootstrap.servers": KAFKA_BROKER})
-
-# The diploma thesis relies on proper configuration by Helm templating.
-# Because of this, only deployment time known services and topics should be called/produced
-# However in modern software technology solutions (e.g. Hooks, Async REST API-s), it is a common practice
-# to pass a topic name or hostname in a parameter of a request and the answer will come back there and not as a result of
-# this handler
-# This is also going to be an important section of my Thesis work
-@app.route("/send", methods=["POST"])
-def send_message():
-    data = request.json
-    topic: str = data.get("topic")
-    message: str = data.get("message")
-    if topic in KNOWN_KAFKA_TOPICS_TO_PRODUCE and message != "":
-        logging.info(f"Producing message: '{message}' to '{topic}' topic")
-        producer.produce(topic, message.encode("utf-8"))
-        producer.flush()
-        return jsonify({"status": "Message sent", "topic": topic})
-    else:
-        logging.info(f"Not known topic: '{topic}', message not produced")
-        return jsonify({"status": "Message not sent"}), 404
+# def kafka_consumer(topic_):
+#     consumer = Consumer({
+#         "bootstrap.servers": KAFKA_BROKER,
+#         "group.id": KAFKA_GROUP_ID,
+#         "auto.offset.reset": "earliest"
+#     })
+#     consumer.subscribe([topic_])
+#
+#     logging.info(f"Consumer thread started for topic: {topic_}")
+#     try:
+#         while True:
+#             msg = consumer.poll(1.0)
+#             if msg is not None and msg.error() is None:
+#                 # Trace header-ek kinyerése (propagáció producer -> consumer között)
+#                 headers = dict(msg.headers() or [])
+#
+#                 # Trace propagáció
+#                 context = extract(headers)
+#
+#                 # OpenTelemetry span létrehozása
+#                 with tracer.start_as_current_span(f"consume_{topic_}", context=context) as span:
+#                         message_value = msg.value().decode("utf-8")
+#                         span.set_attribute("message", message_value)
+#                         span.set_attribute("kafka.topic", topic_)
+#                         logging.info(f"Received message: {message_value}")
+#     except(KeyboardInterrupt):
+#         logging.info(f"Consuming stopped for consumer: {consumer}, stopping...")
+#     finally:
+#         consumer.close()
+#
+#
+# threads = []
+# for topic_to_consume in KNOWN_KAFKA_TOPICS_TO_CONSUME:
+#     thread = threading.Thread(target=kafka_consumer, args=(topic_to_consume,), daemon=True)
+#     thread.start()
+#     threads.append(thread)
+#
+# producer = Producer({"bootstrap.servers": KAFKA_BROKER})
+#
+# # The diploma thesis relies on proper configuration by Helm templating.
+# # Because of this, only deployment time known services and topics should be called/produced
+# # However in modern software technology solutions (e.g. Hooks, Async REST API-s), it is a common practice
+# # to pass a topic name or hostname in a parameter of a request and the answer will come back there and not as a result of
+# # this handler
+# # This is also going to be an important section of my Thesis work
+# @app.route("/send", methods=["POST"])
+# def send_message():
+#     data = request.json
+#     topic: str = data.get("topic")
+#     message: str = data.get("message")
+#     key: str = data.get("key")
+#     if topic in KNOWN_KAFKA_TOPICS_TO_PRODUCE and message != "":
+#         logging.info(f"Producing message: '{message}' to '{topic}' topic")
+#         with tracer.start_as_current_span(f"produce_{topic}") as span:
+#             span.set_attribute("message", message)
+#             span.set_attribute("kafka.topic", topic)
+#
+#             # Trace context propagálása Kafka header-ekbe
+#             carrier = {}
+#             inject(carrier)
+#
+#             producer.produce(topic, key=key, value=message, headers=list(carrier.items()))
+#             producer.flush()
+#         return jsonify({"status": "Message sent", "topic": topic})
+#     else:
+#         logging.info(f"Not known topic: '{topic}', message not produced")
+#         return jsonify({"status": "Message not sent"}), 404
 
 
 @app.route("/call", methods=["POST"])
@@ -83,17 +138,35 @@ def rest_call():
         return jsonify({"error": "Not known service"}), 404
 
     payload = data.get("payload", {})
+    context = extract(request.headers)
 
-    logging.info(f"Calling '{target_url}' with payload '{payload}'")
-    # istio will secure this request
-    response = requests.post(f"http://{target_url}:8080/receive", json=payload)
-    return jsonify({"response": response.json()})
+    with tracer.start_as_current_span(f"calling_{target_url}", context=context) as span:
+        span.set_attribute("http.method", "POST")
+        span.set_attribute("http.url", f"http://{target_url}:8080/receive")
+        span.set_attribute("payload", json.dumps(payload))
+
+        logging.info(f"Calling '{target_url}' with payload '{payload}'")
+
+        # Trace propagáció a kimenő kéréshez
+        headers= {"X-Service-id": service_id}
+        inject(headers)
+
+        response = requests.post(f"http://{target_url}:8080/receive", json=payload, headers=headers)
+
+        span.set_attribute("http.status_code", response.status_code)
+        return jsonify({"response": response.json()})
 
 
 @app.route("/receive", methods=["POST"])
 def receive_message():
-    data = request.json
-    logging.info(f"Received REST message: {json.dumps(data)}")
+    context = extract(request.headers)
+    sender_service_id = request.headers.get("X-Service-id")
+
+    with tracer.start_as_current_span(f"receive_{sender_service_id}", context=context) as span:
+        data = request.json
+        span.set_attribute("message", json.dumps(data))
+
+        logging.info(f"Received REST message: {json.dumps(data)}")
     return jsonify({"status": "Received"})
 
 

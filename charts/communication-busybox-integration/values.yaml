@@ -1,0 +1,8 @@
+
+communication-busybox-1:
+  image:
+    tag: test-19
+
+communication-busybox-2:
+  image:
+    tag: test-19

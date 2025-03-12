@@ -3,3 +3,4 @@ venv/
 .venv/
 minikube-state.yaml
 certs/
+charts/communication-busybox-integration/charts/
