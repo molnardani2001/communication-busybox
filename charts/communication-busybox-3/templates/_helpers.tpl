@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "communication-busybox-2.name" -}}
+{{- define "communication-busybox-3.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "communication-busybox-2.fullname" -}}
+{{- define "communication-busybox-3.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -22,16 +22,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "communication-busybox-2.chart" -}}
+{{- define "communication-busybox-3.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "communication-busybox-2.labels" -}}
-helm.sh/chart: {{ include "communication-busybox-2.chart" . }}
-{{ include "communication-busybox-2.selectorLabels" . }}
+{{- define "communication-busybox-3.labels" -}}
+helm.sh/chart: {{ include "communication-busybox-3.chart" . }}
+{{ include "communication-busybox-3.selectorLabels" . }}
 {{/*
 custom label to secure services only with the below label
 */}}
@@ -40,16 +40,16 @@ service-istio-secure: "true"
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-app: communication-busybox-2
+app: communication-busybox-3
 {{- end }}
 
-{{- define "communication-busybox-2.annotations" -}}
+{{- define "communication-busybox-3.annotations" -}}
 sidecar.istio.io/inject: "true"
-sidecar.istio.io/userVolume: {{ include "communication-busybox-2.service-mesh-user-volume" . | fromYaml | toJson | quote }}
-sidecar.istio.io/userVolumeMount: {{ include "communication-busybox-2.service-mesh-user-volume-mount" . | fromYaml | toJson | quote }}
+sidecar.istio.io/userVolume: {{ include "communication-busybox-3.service-mesh-user-volume" . | fromYaml | toJson | quote }}
+sidecar.istio.io/userVolumeMount: {{ include "communication-busybox-3.service-mesh-user-volume-mount" . | fromYaml | toJson | quote }}
 {{- end -}}
 
-{{- define "communication-busybox-2.service-mesh-user-volume" }}
+{{- define "communication-busybox-3.service-mesh-user-volume" }}
 istio-certs:
   secret:
     secretName: istio-shared-cert
@@ -60,7 +60,7 @@ istio-ca-cert:
     optional: true
 {{- end -}}
 
-{{- define "communication-busybox-2.service-mesh-user-volume-mount" }}
+{{- define "communication-busybox-3.service-mesh-user-volume-mount" }}
 istio-certs:
   mountPath: "/etc/certs"
   readOnly: true
@@ -72,23 +72,23 @@ istio-ca-cert:
 {{/*
 Selector labels
 */}}
-{{- define "communication-busybox-2.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "communication-busybox-2.name" . }}
+{{- define "communication-busybox-3.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "communication-busybox-3.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "communication-busybox-2.serviceAccountName" -}}
+{{- define "communication-busybox-3.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "communication-busybox-2.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "communication-busybox-3.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
-{{- define "communication-busybox-2.extractKafkaTopics" -}}
+{{- define "communication-busybox-3.extractKafkaTopics" -}}
   {{- $topics := list -}}
   {{- range $key, $value := . -}}
     {{- if kindIs "map" $value -}}
@@ -100,7 +100,7 @@ Create the name of the service account to use
   {{- join "," $topics -}}
 {{- end -}}
 
-{{- define "communication-busybox-2.extractServiceHosts" -}}
+{{- define "communication-busybox-3.extractServiceHosts" -}}
  {{- $hosts := list -}}
  {{- range $key, $value := . -}}
     {{- if kindIs "map" $value -}}
@@ -112,7 +112,7 @@ Create the name of the service account to use
   {{- join "," $hosts -}}
 {{- end -}}
 
-{{- define "communication-busybox-2.getKafkaTopicsToProduceStruct" -}}
+{{- define "communication-busybox-3.getKafkaTopicsToProduceStruct" -}}
 {{- if ((.Values.kafka).producer).topics -}}
 {{ .Values.kafka.producer.topics | toYaml }}
 {{- else -}}
@@ -120,7 +120,7 @@ Create the name of the service account to use
 {{- end -}}
 {{- end -}}
 
-{{- define "communication-busybox-2.getKafkaTopicsToConsumeStruct" -}}
+{{- define "communication-busybox-3.getKafkaTopicsToConsumeStruct" -}}
 {{- if ((.Values.kafka).consumer).topics -}}
 {{ .Values.kafka.consumer.topics | toYaml }}
 {{- else -}}
@@ -128,7 +128,7 @@ Create the name of the service account to use
 {{- end -}}
 {{- end -}}
 
-{{- define "communication-busybox-2.getHostsStruct" -}}
+{{- define "communication-busybox-3.getHostsStruct" -}}
 {{- if .Values.hosts -}}
 {{ .Values.hosts | toYaml }}
 {{- else -}}
@@ -136,7 +136,7 @@ Create the name of the service account to use
 {{- end -}}
 {{- end -}}
 
-{{- define "communication-busybox-2.getJaegerHost" -}}
+{{- define "communication-busybox-3.getJaegerHost" -}}
 {{- if ((.Values.global).jaeger).host -}}
 {{ print .Values.global.jaeger.host }}
 {{- else -}}
@@ -144,7 +144,7 @@ Create the name of the service account to use
 {{- end -}}
 {{- end -}}
 
-{{- define "communication-busybox-2.getJaegerPort" -}}
+{{- define "communication-busybox-3.getJaegerPort" -}}
 {{- if ((.Values.global).jaeger).port -}}
 {{ print .Values.global.jaeger.port }}
 {{- else -}}

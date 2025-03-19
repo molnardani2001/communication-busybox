@@ -5,9 +5,9 @@ metadata:
   labels:
     strimzi.io/cluster: kafka-cluster
 spec:
+  topicName: {{ .Values.kafka.producer.topics.topicOne.name | quote }}
   partitions: 1
   replicas: 1
   config:
-    topicName: {{ .Values.kafka.producer.topics.topicOne.name | quote }}
     retention.ms: 7200000
     segment.bytes: 1073741824

@@ -9,3 +9,12 @@ dependencies:
   - name: communication-busybox-2
     version: 0.1.0
     repository: "file://../communication-busybox-2"
+  - name: communication-busybox-3
+    version: 0.1.0
+    repository: "file://../communication-busybox-3"
+  - name: communication-busybox-4
+    version: 0.1.0
+    repository: "file://../communication-busybox-4"
+  - name: communication-busybox-5
+    version: 0.1.0
+    repository: "file://../communication-busybox-5"

@@ -1,0 +1,29 @@
+communication-busybox-1:
+  kafka:
+    consumer:
+
+    producer:
+
+communication-busybox-2:
+  kafka:
+    consumer:
+
+    producer:
+
+communication-busybox-3:
+  kafka:
+    consumer:
+
+    producer:
+
+communication-busybox-4:
+  kafka:
+    consumer:
+
+    producer:
+
+communication-busybox-5:
+  kafka:
+    consumer:
+
+    producer:

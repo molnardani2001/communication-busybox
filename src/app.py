@@ -53,78 +53,94 @@ KAFKA_GROUP_ID=os.getenv("KAFKA_GROUP_ID", "default-group")
 
 KNOWN_SERVICES_TO_CALL = os.getenv("HOSTS","localhost").split(",")
 
+ENABLE_DYNAMIC_COMMUNICATION = os.getenv("DYNAMIC_COMMUNICATION", False)
+
 logging.info(f"Known topics to consume: {','.join(KNOWN_KAFKA_TOPICS_TO_CONSUME)}")
 logging.info(f"Known topics to produce: {','.join(KNOWN_KAFKA_TOPICS_TO_PRODUCE)}")
 logging.info(f"Known hosts: {','.join(KNOWN_SERVICES_TO_CALL)}")
 
 
-# def kafka_consumer(topic_):
-#     consumer = Consumer({
-#         "bootstrap.servers": KAFKA_BROKER,
-#         "group.id": KAFKA_GROUP_ID,
-#         "auto.offset.reset": "earliest"
-#     })
-#     consumer.subscribe([topic_])
-#
-#     logging.info(f"Consumer thread started for topic: {topic_}")
-#     try:
-#         while True:
-#             msg = consumer.poll(1.0)
-#             if msg is not None and msg.error() is None:
-#                 # Trace header-ek kinyerése (propagáció producer -> consumer között)
-#                 headers = dict(msg.headers() or [])
-#
-#                 # Trace propagáció
-#                 context = extract(headers)
-#
-#                 # OpenTelemetry span létrehozása
-#                 with tracer.start_as_current_span(f"consume_{topic_}", context=context) as span:
-#                         message_value = msg.value().decode("utf-8")
-#                         span.set_attribute("message", message_value)
-#                         span.set_attribute("kafka.topic", topic_)
-#                         logging.info(f"Received message: {message_value}")
-#     except(KeyboardInterrupt):
-#         logging.info(f"Consuming stopped for consumer: {consumer}, stopping...")
-#     finally:
-#         consumer.close()
-#
-#
-# threads = []
-# for topic_to_consume in KNOWN_KAFKA_TOPICS_TO_CONSUME:
-#     thread = threading.Thread(target=kafka_consumer, args=(topic_to_consume,), daemon=True)
-#     thread.start()
-#     threads.append(thread)
-#
-# producer = Producer({"bootstrap.servers": KAFKA_BROKER})
-#
-# # The diploma thesis relies on proper configuration by Helm templating.
-# # Because of this, only deployment time known services and topics should be called/produced
-# # However in modern software technology solutions (e.g. Hooks, Async REST API-s), it is a common practice
-# # to pass a topic name or hostname in a parameter of a request and the answer will come back there and not as a result of
-# # this handler
-# # This is also going to be an important section of my Thesis work
-# @app.route("/send", methods=["POST"])
-# def send_message():
-#     data = request.json
-#     topic: str = data.get("topic")
-#     message: str = data.get("message")
-#     key: str = data.get("key")
-#     if topic in KNOWN_KAFKA_TOPICS_TO_PRODUCE and message != "":
-#         logging.info(f"Producing message: '{message}' to '{topic}' topic")
-#         with tracer.start_as_current_span(f"produce_{topic}") as span:
-#             span.set_attribute("message", message)
-#             span.set_attribute("kafka.topic", topic)
-#
-#             # Trace context propagálása Kafka header-ekbe
-#             carrier = {}
-#             inject(carrier)
-#
-#             producer.produce(topic, key=key, value=message, headers=list(carrier.items()))
-#             producer.flush()
-#         return jsonify({"status": "Message sent", "topic": topic})
-#     else:
-#         logging.info(f"Not known topic: '{topic}', message not produced")
-#         return jsonify({"status": "Message not sent"}), 404
+def kafka_consumer(topic_):
+    consumer = Consumer({
+        "bootstrap.servers": KAFKA_BROKER,
+        "group.id": KAFKA_GROUP_ID,
+        "auto.offset.reset": "earliest"
+    })
+    consumer.subscribe([topic_])
+
+    logging.info(f"Consumer thread started for topic: {topic_}")
+    try:
+        while True:
+            msg = consumer.poll(1.0)
+            if msg is not None and msg.error() is None:
+                # Trace header-ek kinyerése (propagáció producer -> consumer között)
+                headers = dict(msg.headers() or [])
+
+                # Trace propagáció
+                context = extract(headers)
+
+                # OpenTelemetry span létrehozása
+                with tracer.start_as_current_span(f"consume_{topic_}", context=context) as span:
+                        message_value = msg.value().decode("utf-8")
+                        span.set_attribute("message", message_value)
+                        span.set_attribute("kafka.topic", topic_)
+                        logging.info(f"Received message: {message_value}")
+    except(KeyboardInterrupt):
+        logging.info(f"Consuming stopped for consumer: {consumer}, stopping...")
+    finally:
+        consumer.close()
+
+
+threads = []
+for topic_to_consume in KNOWN_KAFKA_TOPICS_TO_CONSUME:
+    thread = threading.Thread(target=kafka_consumer, args=(topic_to_consume,), daemon=True)
+    thread.start()
+    threads.append(thread)
+
+producer = Producer({"bootstrap.servers": KAFKA_BROKER})
+
+@app.route("/consume", methods=["POST"])
+def start_consume():
+    data = request.json
+    topic: str = data.get("topic")
+    if ENABLE_DYNAMIC_COMMUNICATION and topic not in KNOWN_KAFKA_TOPICS_TO_CONSUME:
+        logging.info(f"Starting to consume new topic: '{topic}'")
+        thread_ = threading.Thread(target=kafka_consumer, args=(topic,), daemon=True)
+        thread_.start()
+        threads.append(thread_)
+
+# The diploma thesis relies on proper configuration by Helm templating.
+# Because of this, only deployment time known services and topics should be called/produced
+# However in modern software technology solutions (e.g. Hooks, Async REST API-s), it is a common practice
+# to pass a topic name or hostname in a parameter of a request and the answer will come back there and not as a result of
+# this handler
+# This is also going to be an important section of my Thesis work
+@app.route("/send", methods=["POST"])
+def send_message():
+    data = request.json
+    topic: str = data.get("topic")
+    message: str = data.get("message")
+    key: str = data.get("key")
+    if ENABLE_DYNAMIC_COMMUNICATION or (topic in KNOWN_KAFKA_TOPICS_TO_PRODUCE and message != ""):
+        produce_message(key, message, topic)
+        return jsonify({"status": "Message sent", "topic": topic})
+    else:
+        logging.info(f"Not known topic: '{topic}', message not produced")
+        return jsonify({"status": "Message not sent"}), 404
+
+
+def produce_message(key, message, topic):
+    logging.info(f"Producing message: '{message}' to '{topic}' topic")
+    with tracer.start_as_current_span(f"produce_{topic}") as span:
+        span.set_attribute("message", message)
+        span.set_attribute("kafka.topic", topic)
+
+        # Trace context propagálása Kafka header-ekbe
+        carrier = {}
+        inject(carrier)
+
+        producer.produce(topic, key=key, value=message, headers=list(carrier.items()))
+        producer.flush()
 
 
 @app.route("/call", methods=["POST"])
@@ -134,7 +150,7 @@ def rest_call():
     if not target_url:
         return jsonify({"error": "No target URL provided"}), 400
 
-    if not target_url in KNOWN_SERVICES_TO_CALL:
+    if not ENABLE_DYNAMIC_COMMUNICATION and not target_url in KNOWN_SERVICES_TO_CALL:
         return jsonify({"error": "Not known service"}), 404
 
     payload = data.get("payload", {})

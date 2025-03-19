@@ -4,3 +4,4 @@ venv/
 minikube-state.yaml
 certs/
 charts/communication-busybox-integration/charts/
+charts/communication-busybox-integration-templated

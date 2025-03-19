@@ -10,3 +10,8 @@ kubectl create namespace kafka-operator
 helm install strimzi/strimzi-kafka-operator --namespace molnardani --generate-name
 # kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.1/components.yaml
 kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.24/samples/addons/prometheus.yaml
+helm install jaeger jaegertracing/jaeger \
+  --set agent.enabled=true \
+  --set collector.enabled=true \
+  --set query.enabled=true \
+  --set storage.type=memory -n molnardani

@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "communication-busybox-1.fullname" . }}
+  name: {{ include "communication-busybox-4.fullname" . }}
   labels:
-    {{- include "communication-busybox-1.labels" . | nindent 4 }}
+    {{- include "communication-busybox-4.labels" . | nindent 4 }}
   annotations:
     proxy.istio.io/config: |
       proxyMetadata:
@@ -16,16 +16,16 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "communication-busybox-1.selectorLabels" . | nindent 6 }}
+      {{- include "communication-busybox-4.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
-        {{- include "communication-busybox-1.annotations" . | nindent 8 }}
+        {{- include "communication-busybox-4.annotations" . | nindent 8 }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "communication-busybox-1.labels" . | nindent 8 }}
+        {{- include "communication-busybox-4.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -34,7 +34,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "communication-busybox-1.serviceAccountName" . }}
+      serviceAccountName: {{ include "communication-busybox-4.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -46,16 +46,19 @@ spec:
               value: "{{ .Values.kafka.broker.host }}:{{ .Values.kafka.broker.port}}"
             - name: KAFKA_GROUP_ID
               value: "{{ .Values.kafka.consumer.groupId }}"
+            {{- $consumeKafkaTopicsKey := include "communication-busybox-4.getKafkaTopicsToConsumeStruct" . | fromYaml }}
             - name: CONSUME_KAFKA_TOPIC
-              value:  {{ include "communication-busybox-1.extractKafkaTopics" .Values.kafka.consumer.topics | quote }}
+              value:  {{ include "communication-busybox-4.extractKafkaTopics" $consumeKafkaTopicsKey | quote }}
+            {{- $produceKafkaTopicsKey := include "communication-busybox-4.getKafkaTopicsToProduceStruct" . | fromYaml }}
             - name: PRODUCE_KAFKA_TOPIC
-              value: {{ include "communication-busybox-1.extractKafkaTopics" .Values.kafka.producer.topics | quote }}
+              value: {{ include "communication-busybox-4.extractKafkaTopics" $produceKafkaTopicsKey | quote }}
+            {{- $hostsKey := include "communication-busybox-4.getHostsStruct" . | fromYaml }}
             - name: HOSTS
-              value: {{ include "communication-busybox-1.extractServiceHosts" .Values.hosts | quote }}
+              value: {{ include "communication-busybox-4.extractServiceHosts" $hostsKey | quote }}
             - name: JAEGER_HOST
-              value: {{ .Values.jaeger.host | quote }}
+              value: {{ include "communication-busybox-4.getJaegerHost" . | quote }}
             - name: JAEGER_PORT
-              value: {{ .Values.jaeger.port | quote }}
+              value: {{ include "communication-busybox-4.getJaegerPort" . | quote }}
             - name: ENABLE_DYNAMIC_COMMUNICATION
               value: {{ .Values.enableDynamicCommunication | quote }}
           securityContext:
