@@ -4,7 +4,7 @@
 
 enableDynamicCommunication: false
 
-replicaCount: 2
+replicaCount: 1
 
 image:
   repository: molnardani2001/communication-busybox
@@ -97,17 +97,24 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 # Additional volumes on the output Deployment definition.
-volumes: []
-# - name: foo
-#   secret:
-#     secretName: mysecret
-#     optional: false
+volumes:
+ - name: kafka-certs
+   secret:
+     secretName: communication-busybox-1
+     optional: true
+ - name: kafka-ca-cert
+   secret:
+     secretName: kafka-cluster-cluster-ca-cert
+     optional: true
 
 # Additional volumeMounts on the output Deployment definition.
-volumeMounts: []
-# - name: foo
-#   mountPath: "/etc/foo"
-#   readOnly: true
+volumeMounts:
+ - name: kafka-certs
+   mountPath: "/etc/secrets/kafka"
+   readOnly: true
+ - name: kafka-ca-cert
+   mountPath: "/etc/secrets/kafka/ca"
+   readOnly: true
 
 nodeSelector: {}
 tolerations: []
@@ -116,7 +123,7 @@ affinity: {}
 kafka:
   broker:
     host: kafka-cluster-kafka-bootstrap
-    port: 9092
+    port: 9093
 
   consumer:
     groupId: busybox-3

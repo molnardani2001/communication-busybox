@@ -8,7 +8,6 @@ import logging
 
 #tracing
 from opentelemetry import trace
-from opentelemetry.baggage import set_baggage, get_baggage
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor
@@ -20,7 +19,6 @@ from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.instrumentation.confluent_kafka import ConfluentKafkaInstrumentor
 from opentelemetry.propagate import extract, inject
-from werkzeug.datastructures import Headers
 
 app = Flask(__name__)
 
@@ -55,6 +53,13 @@ KNOWN_SERVICES_TO_CALL = os.getenv("HOSTS","localhost").split(",")
 
 ENABLE_DYNAMIC_COMMUNICATION = os.getenv("DYNAMIC_COMMUNICATION", False)
 
+KAFKA_SECURITY_CONFIG = {
+    "security.protocol": "SSL",
+    "ssl.ca.location": "/etc/secrets/kafka/ca/ca.crt",
+    "ssl.certificate.location": "/etc/secrets/kafka/user.crt",
+    "ssl.key.location": "/etc/secrets/kafka/user.key"
+}
+
 logging.info(f"Known topics to consume: {','.join(KNOWN_KAFKA_TOPICS_TO_CONSUME)}")
 logging.info(f"Known topics to produce: {','.join(KNOWN_KAFKA_TOPICS_TO_PRODUCE)}")
 logging.info(f"Known hosts: {','.join(KNOWN_SERVICES_TO_CALL)}")
@@ -64,7 +69,8 @@ def kafka_consumer(topic_):
     consumer = Consumer({
         "bootstrap.servers": KAFKA_BROKER,
         "group.id": KAFKA_GROUP_ID,
-        "auto.offset.reset": "earliest"
+        "auto.offset.reset": "earliest",
+        **KAFKA_SECURITY_CONFIG
     })
     consumer.subscribe([topic_])
 
@@ -97,7 +103,10 @@ for topic_to_consume in KNOWN_KAFKA_TOPICS_TO_CONSUME:
     thread.start()
     threads.append(thread)
 
-producer = Producer({"bootstrap.servers": KAFKA_BROKER})
+producer = Producer({
+    "bootstrap.servers": KAFKA_BROKER,
+    **KAFKA_SECURITY_CONFIG
+})
 
 @app.route("/consume", methods=["POST"])
 def start_consume():

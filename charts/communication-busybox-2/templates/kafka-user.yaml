@@ -1,0 +1,64 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  annotations:
+    {{- include "communication-busybox-2.annotations" . | nindent 4 }}
+  labels:
+    strimzi.io/cluster: kafka-cluster
+    {{- include "communication-busybox-2.labels" . | nindent 4 }}
+  name:  communication-busybox-2
+spec:
+  authentication:
+    type: tls
+  authorization:
+    acls:
+      - resource:
+          type: transactionalId
+          name: '*'
+          patternType: literal
+        operations:
+        - Read
+        - Write
+        - Create
+        - Describe
+      - resource:
+          type: cluster
+        operations:
+        - Create
+      - resource:
+          type: topic
+          patternType: literal
+          name: {{ .Values.kafka.producer.topics.topicOne.name | quote }}
+        operations:
+        - Create
+        - Write
+      - resource:
+          type: topic
+          patternType: literal
+          name: {{ .Values.kafka.producer.topics.topicTwo.name | quote }}
+        operations:
+        - Create
+        - Write
+      - resource:
+          type: topic
+          patternType: literal
+          name: {{ .Values.kafka.consumer.topics.topicOne.name | quote }}
+        operations:
+        - Read
+{{- $enableDynamicCommunication := .Values.enableDynamicCommunication }}
+{{ if $enableDynamicCommunication }}
+      - resource:
+          type: topic
+          patternType: literal
+          name: '*'
+        operations:
+        - Read
+        - Write
+{{ end }}
+      - resource:
+          type: group
+          patternType: literal
+          name: '*'
+        operations:
+        - Read
+    type: simple
