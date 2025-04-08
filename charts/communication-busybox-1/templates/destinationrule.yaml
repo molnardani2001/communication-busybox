@@ -1,0 +1,9 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: communication-busybox-1-destinationrule
+spec:
+  host: communication-busybox-1
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL

@@ -100,7 +100,7 @@ autoscaling:
 volumes:
  - name: kafka-certs
    secret:
-     secretName: communication-busybox-1
+     secretName: communication-busybox-3
      optional: true
  - name: kafka-ca-cert
    secret:
@@ -132,6 +132,10 @@ kafka:
         name: busybox-2-topic-2
 
   producer:
+
+jaeger:
+  host: localhost
+  port: 1111
 
 hosts:
   busyboxOne:

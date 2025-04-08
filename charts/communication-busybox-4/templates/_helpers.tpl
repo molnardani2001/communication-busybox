@@ -139,6 +139,8 @@ Create the name of the service account to use
 {{- define "communication-busybox-4.getJaegerHost" -}}
 {{- if ((.Values.global).jaeger).host -}}
 {{ print .Values.global.jaeger.host }}
+{{- else if (.Values.jaeger).host -}}
+{{ print .Values.jaeger.host }}
 {{- else -}}
 {{ print "svc.cluster.local.default" }}
 {{- end -}}
@@ -147,6 +149,8 @@ Create the name of the service account to use
 {{- define "communication-busybox-4.getJaegerPort" -}}
 {{- if ((.Values.global).jaeger).port -}}
 {{ print .Values.global.jaeger.port }}
+{{- else if (.Values.jaeger).port -}}
+{{ print .Values.jaeger.port }}
 {{- else -}}
 {{ print "8080" }}
 {{- end -}}

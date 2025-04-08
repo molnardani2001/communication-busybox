@@ -5,5 +5,20 @@ dependencies:
 - name: communication-busybox-2
   repository: file://../communication-busybox-2
   version: 0.1.0
-digest: sha256:c9828774ed72077cc569a1223b160565946d4d9f2f7bb3309bbcbbeed09caec2
-generated: "2025-03-03T21:08:37.53585958+01:00"
+- name: communication-busybox-3
+  repository: file://../communication-busybox-3
+  version: 0.1.0
+- name: communication-busybox-4
+  repository: file://../communication-busybox-4
+  version: 0.1.0
+- name: communication-busybox-5
+  repository: file://../communication-busybox-5
+  version: 0.1.0
+- name: kafka-wrapper
+  repository: file://../kafka
+  version: 0.1.0
+- name: jaeger-wrapper
+  repository: file://../jaeger
+  version: 0.1.0
+digest: sha256:e6fcdc04868af7640965ad38fef8a72b1def25550cc14ae25fef6604ac7b08b6
+generated: "2025-04-08T21:02:42.280892324+02:00"

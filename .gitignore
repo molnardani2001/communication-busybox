@@ -5,3 +5,5 @@ minikube-state.yaml
 certs/
 charts/communication-busybox-integration/charts/
 charts/communication-busybox-integration-templated
+charts/additional-helm-files/kiali-cr-*
+**/copy-chart-files.sh

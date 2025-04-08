@@ -53,9 +53,9 @@ spec:
             - name: HOSTS
               value: {{ include "communication-busybox-1.extractServiceHosts" .Values.hosts | quote }}
             - name: JAEGER_HOST
-              value: {{ .Values.jaeger.host | quote }}
+              value: {{ include "communication-busybox-1.getJaegerHost" . | quote }}
             - name: JAEGER_PORT
-              value: {{ .Values.jaeger.port | quote }}
+              value: {{ include "communication-busybox-1.getJaegerPort" . | quote }}
             - name: ENABLE_DYNAMIC_COMMUNICATION
               value: {{ .Values.enableDynamicCommunication | quote }}
           securityContext:

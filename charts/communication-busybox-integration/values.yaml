@@ -1,24 +1,25 @@
 global:
+  timezone: UTC
   jaeger:
-    host: jaeger-agent
-    port: 6831
+    host: jaeger-collector
+    port: 4317
 
 communication-busybox-1:
   image:
-    tag: test-24
+    tag: test-27
 
 communication-busybox-2:
   image:
-    tag: test-24
+    tag: test-27
 
 communication-busybox-3:
   image:
-    tag: test-24
+    tag: test-27
 
 communication-busybox-4:
   image:
-    tag: test-24
+    tag: test-27
 
 communication-busybox-5:
   image:
-    tag: test-24
+    tag: test-27

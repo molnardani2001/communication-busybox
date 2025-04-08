@@ -9,7 +9,7 @@ replicaCount: 1
 image:
   repository: molnardani2001/communication-busybox
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+    # Overrides the image tag whose default is the chart appVersion.
   tag: test-08
 
 imagePullSecrets: []
@@ -100,7 +100,7 @@ autoscaling:
 volumes:
  - name: kafka-certs
    secret:
-     secretName: communication-busybox-1
+     secretName: communication-busybox-2
      optional: true
  - name: kafka-ca-cert
    secret:
@@ -137,6 +137,10 @@ kafka:
         name: busybox-2-topic-1
       topicTwo:
         name: busybox-2-topic-2
+
+jaeger:
+  host: localhost
+  port: 1111
 
 hosts:
   busyboxTwo:

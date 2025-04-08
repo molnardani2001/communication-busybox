@@ -27,14 +27,16 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
 )
 
-service_id: str= os.getenv("SERVICE_ID","default")
+service_id: str = os.getenv("SERVICE_ID","default")
+JAEGER_HOST:str = os.getenv("JAEGER_HOST","jaeger-collector")
+JAEGER_PORT:str = os.getenv("JAEGER_PORT","4317")
 
 resource = Resource.create(attributes={"service.name": service_id})
 
 trace.set_tracer_provider(TracerProvider(resource=resource))
 tracer = trace.get_tracer(__name__)
 
-jaeger_exporter = OTLPSpanExporter(endpoint="http://jaeger-collector:4317", insecure=True)
+jaeger_exporter = OTLPSpanExporter(endpoint=f"http://{JAEGER_HOST}:{JAEGER_PORT}", insecure=True)
 span_processor = BatchSpanProcessor(jaeger_exporter)
 trace.get_tracer_provider().add_span_processor(span_processor)
 
@@ -44,7 +46,7 @@ RequestsInstrumentor().instrument()
 ConfluentKafkaInstrumentor().instrument()
 
 # Kafka configuration
-KAFKA_BROKER = os.getenv("KAFKA_BROKER", "localhost:9092")
+KAFKA_BROKER:str = os.getenv("KAFKA_BROKER", "localhost:9092")
 KNOWN_KAFKA_TOPICS_TO_CONSUME = os.getenv("CONSUME_KAFKA_TOPIC", "").split(",")
 KNOWN_KAFKA_TOPICS_TO_PRODUCE = os.getenv("PRODUCE_KAFKA_TOPIC", "").split(",")
 KAFKA_GROUP_ID=os.getenv("KAFKA_GROUP_ID", "default-group")
@@ -79,8 +81,12 @@ def kafka_consumer(topic_):
         while True:
             msg = consumer.poll(1.0)
             if msg is not None and msg.error() is None:
-                # Trace header-ek kinyerése (propagáció producer -> consumer között)
-                headers = dict(msg.headers() or [])
+                raw_headers = msg.headers() or []
+                headers = {
+                    k: v.decode("utf-8") if isinstance(v, bytes) else v
+                    for k, v in raw_headers
+                    if isinstance(v, (bytes, str))
+                }
 
                 # Trace propagáció
                 context = extract(headers)
@@ -91,7 +97,7 @@ def kafka_consumer(topic_):
                         span.set_attribute("message", message_value)
                         span.set_attribute("kafka.topic", topic_)
                         logging.info(f"Received message: {message_value}")
-    except(KeyboardInterrupt):
+    except Exception:
         logging.info(f"Consuming stopped for consumer: {consumer}, stopping...")
     finally:
         consumer.close()
@@ -117,6 +123,9 @@ def start_consume():
         thread_ = threading.Thread(target=kafka_consumer, args=(topic,), daemon=True)
         thread_.start()
         threads.append(thread_)
+        return jsonify({"status": f"Subscribed to topic '{topic}'"}), 201
+    else:
+        return jsonify({"status": f"Dynamic topic subscription is not enabled or consumer is already running for '{topic}'"}), 409
 
 # The diploma thesis relies on proper configuration by Helm templating.
 # Because of this, only deployment time known services and topics should be called/produced

@@ -111,23 +111,3 @@ Create the name of the service account to use
   {{- end -}}
   {{- join "," $hosts -}}
 {{- end -}}
-
-{{- define "communication-busybox-1.getJaegerHost" -}}
-{{- if ((.Values.global).jaeger).host -}}
-{{ print .Values.global.jaeger.host }}
-{{- else if (.Values.jaeger).host -}}
-{{ print .Values.jaeger.host }}
-{{- else -}}
-{{ print "svc.cluster.local.default" }}
-{{- end -}}
-{{- end -}}
-
-{{- define "communication-busybox-1.getJaegerPort" -}}
-{{- if ((.Values.global).jaeger).port -}}
-{{ print .Values.global.jaeger.port }}
-{{- else if (.Values.jaeger).port -}}
-{{ print .Values.jaeger.port }}
-{{- else -}}
-{{ print "8080" }}
-{{- end -}}
-{{- end -}}
