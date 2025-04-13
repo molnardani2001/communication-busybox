@@ -73,8 +73,8 @@ done
 for service1 in $services; do
   for service2 in $services; do
     if [[ "$service1" != "$service2" ]]; then
-      echo "Calling $service2 from $service over REST"
-      call_other_service "$service" "${service_host_mapping[$service]}" "$service2"
+      echo "Calling $service2 from $service1 over REST"
+      call_other_service "$service1" "${service_host_mapping[$service1]}" "$service2"
     fi
   done
 done

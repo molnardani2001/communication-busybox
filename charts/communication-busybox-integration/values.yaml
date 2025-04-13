@@ -6,20 +6,40 @@ global:
 
 communication-busybox-1:
   image:
-    tag: test-27
+    tag: test-30
+  kafka:
+    broker:
+      host: kafka-cluster-kafka-bootstrap
+      port: 9093
 
 communication-busybox-2:
   image:
-    tag: test-27
+    tag: test-30
+  kafka:
+    broker:
+      host: kafka-cluster-kafka-bootstrap
+      port: 9093
 
 communication-busybox-3:
   image:
-    tag: test-27
+    tag: test-30
+  kafka:
+    broker:
+      host: kafka-cluster-kafka-bootstrap
+      port: 9093
 
 communication-busybox-4:
   image:
-    tag: test-27
+    tag: test-30
+  kafka:
+    broker:
+      host: kafka-cluster-kafka-bootstrap
+      port: 9093
 
 communication-busybox-5:
   image:
-    tag: test-27
+    tag: test-30
+  kafka:
+    broker:
+      host: kafka-cluster-kafka-bootstrap
+      port: 9093

@@ -53,7 +53,7 @@ KAFKA_GROUP_ID=os.getenv("KAFKA_GROUP_ID", "default-group")
 
 KNOWN_SERVICES_TO_CALL = os.getenv("HOSTS","localhost").split(",")
 
-ENABLE_DYNAMIC_COMMUNICATION = os.getenv("DYNAMIC_COMMUNICATION", False)
+ENABLE_DYNAMIC_COMMUNICATION = os.getenv("ENABLE_DYNAMIC_COMMUNICATION", False)
 
 KAFKA_SECURITY_CONFIG = {
     "security.protocol": "SSL",
@@ -123,6 +123,7 @@ def start_consume():
         thread_ = threading.Thread(target=kafka_consumer, args=(topic,), daemon=True)
         thread_.start()
         threads.append(thread_)
+        KNOWN_KAFKA_TOPICS_TO_CONSUME.append(topic)
         return jsonify({"status": f"Subscribed to topic '{topic}'"}), 201
     else:
         return jsonify({"status": f"Dynamic topic subscription is not enabled or consumer is already running for '{topic}'"}), 409

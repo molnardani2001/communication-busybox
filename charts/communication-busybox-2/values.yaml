@@ -122,8 +122,8 @@ affinity: {}
 
 kafka:
   broker:
-    host: kafka-cluster-kafka-bootstrap
-    port: 9093
+    host: localhost
+    port: 9092
 
   consumer:
     groupId: busybox-2
